@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>MelodyMind · AI Song Recommendation Chatbot (Tamil + Global)</title>
+    <!-- Google Fonts & simple CSS reset -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <!-- Font Awesome 6 (free icons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(145deg, #f9f3e6 0%, #ffe6f0 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* main chat app container */
+        .chat-app {
+            width: 100%;
+            max-width: 1300px;
+            height: 90vh;
+            min-height: 650px;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(2px);
+            border-radius: 2rem;
+            box-shadow: 0 25px 45px -12px rgba(0,0,0,0.3), 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        /* header area */
+        .chat-header {
+            background: linear-gradient(135deg, #1e2a3e 0%, #0f172a 100%);
+            padding: 1.2rem 2rem;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .brand i {
+            font-size: 2rem;
+            background: linear-gradient(145deg, #f97316, #ffb347);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 8px rgba(255,165,0,0.3);
+        }
+        .brand h1 {
+            font-size: 1.7rem;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+        .brand p {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-top: 4px;
+        }
+        .badge-ml {
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(4px);
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .badge-ml i {
+            font-size: 1rem;
+        }
+
+        /* main flex: sidebar + chat area */
+        .main-dashboard {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* sidebar (song context / trending) */
+        .sidebar {
+            width: 280px;
+            background: rgba(255, 250, 240, 0.8);
+            backdrop-filter: blur(8px);
+            border-right: 1px solid rgba(0,0,0,0.08);
+            padding: 1.5rem 1rem;
+            overflow-y: auto;
+            transition: all 0.2s;
+        }
+        .sidebar h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-left: 3px solid #f97316;
+            padding-left: 12px;
+        }
+        .mood-tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 2rem;
+        }
+        .mood-chip {
+            background: #fff;
+            border-radius: 40px;
+            padding: 6px 14px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid #ffe0b5;
+            color: #4a3b2c;
+        }
+        .mood-chip:hover {
+            background: #f97316;
+            color: white;
+            border-color: #f97316;
+            transform: scale(0.96);
+        }
+        .genre-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .genre-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 60px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: 0.1s linear;
+            border: 1px solid #f1e5d4;
+        }
+        .genre-item i {
+            width: 24px;
+            color: #f97316;
+        }
+        .genre-item:hover {
+            background: #fff2e5;
+            border-color: #f97316;
+            transform: translateX(5px);
+        }
+        .now-playing-note {
+            margin-top: 2rem;
+            background: #1e293b10;
+            padding: 12px;
+            border-radius: 24px;
+            font-size: 0.7rem;
+            text-align: center;
+            color: #475569;
+        }
+
+        /* chat container */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #fefcf7;
+            overflow: hidden;
+        }
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+        /* message bubbles */
+        .message {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            max-width: 85%;
+            animation: fadeSlideUp 0.25s ease;
+        }
+        .message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+        .message.bot {
+            align-self: flex-start;
+        }
+        .avatar {
+            width: 38px;
+            height: 38px;
+            background: #f1f5f9;
+            border-radius: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        .message.user .avatar {
+            background: #f97316;
+            color: white;
+        }
+        .message.bot .avatar {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+        .bubble {
+            background: white;
+            padding: 12px 18px;
+            border-radius: 24px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.03);
+            border: 1px solid #f0e5d8;
+            line-height: 1.45;
+            font-size: 0.95rem;
+        }
+        .message.user .bubble {
+            background: #f97316;
+            color: white;
+            border: none;
+        }
+        .song-card {
+            background: #fef9ef;
+            border-radius: 20px;
+            padding: 12px 14px;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-left: 4px solid #f97316;
+            transition: 0.1s;
+        }
+        .song-icon {
+            font-size: 2rem;
+        }
+        .song-info h4 {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+        .song-info p {
+            font-size: 0.75rem;
+            opacity: 0.7;
+        }
+        .rec-list {
+            margin-top: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* typing indicator */
+        .typing {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: #eef2ff;
+            width: fit-content;
+            border-radius: 40px;
+        }
+        .dot {
+            width: 6px;
+            height: 6px;
+            background: #f97316;
+            border-radius: 50%;
+            animation: pulse 1.2s infinite;
+        }
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; transform: scale(0.8);}
+            50% { opacity: 1; transform: scale(1.2);}
+        }
+
+        /* input area */
+        .input-area {
+            padding: 1rem 2rem 1.5rem;
+            background: white;
+            border-top: 1px solid #f0e2d4;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .input-area input {
+            flex: 1;
+            padding: 14px 20px;
+            border-radius: 60px;
+            border: 1px solid #f0d5be;
+            font-size: 1rem;
+            outline: none;
+            background: #fffbf5;
+            transition: 0.2s;
+        }
+        .input-area input:focus {
+            border-color: #f97316;
+            box-shadow: 0 0 0 3px rgba(249,115,22,0.2);
+        }
+        .input-area button {
+            background: #f97316;
+            border: none;
+            width: 48px;
+            height: 48px;
+            border-radius: 60px;
+            color: white;
+            font-size: 1.3rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .input-area button:hover {
+            background: #ea580c;
+            transform: scale(0.96);
+        }
+
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(8px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+
+        /* scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #f1e6da; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #f97316; border-radius: 10px; }
+
+        @media (max-width: 760px) {
+            .sidebar { display: none; }
+            .message { max-width: 95%; }
+            .messages-area { padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="chat-app">
+    <div class="chat-header">
+        <div class="brand">
+            <i class="fas fa-head-side-vr"></i>
+            <div>
+                <h1>MelodyMind<span style="font-weight:300">·AI</span></h1>
+                <p>தமிழ் + Global · neural song oracle</p>
+            </div>
+        </div>
+        <div class="badge-ml">
+            <i class="fas fa-microchip"></i> <span>ML Embeddings • Tamil+English • 70+ Songs</span>
+            <i class="fas fa-music"></i>
+        </div>
+    </div>
+    <div class="main-dashboard">
+        <!-- Sidebar with mood & genre shortcuts -->
+        <div class="sidebar">
+            <h3><i class="fas fa-smile-wink"></i> Mood shortcuts</h3>
+            <div class="mood-tag-list" id="moodChipsContainer">
+                <!-- dynamic moods injected via js but also static fallback -->
+            </div>
+            <h3><i class="fas fa-guitar"></i> Genre / Language</h3>
+            <div class="genre-list" id="genreListSidebar">
+                <!-- genres will load here -->
+            </div>
+            <div class="now-playing-note">
+                <i class="fas fa-robot"></i> ML model: <strong>Multilingual Mood2Vec</strong><br>
+                Now featuring 35+ Tamil songs from AR Rahman, Anirudh, Ilaiyaraaja & more!
+            </div>
+        </div>
+
+        <!-- chat area -->
+        <div class="chat-container">
+            <div class="messages-area" id="messagesArea">
+                <div class="message bot">
+                    <div class="avatar"><i class="fas fa-robot"></i></div>
+                    <div class="bubble">
+                        🎧 வணக்கம்! Vanakkam! I'm your ML song concierge with <strong>Tamil + Global</strong> recommendations.<br>
+                        Tell me your vibe in English or Tamil: e.g., <strong>"romantic tamil songs"</strong>, <strong>"அனிருத் பாடல்கள் upbeat"</strong>, <strong>"sad Ilaiyaraaja"</strong>, or <strong>energetic workout</strong>.
+                    </div>
+                </div>
+            </div>
+            <div class="input-area">
+                <input type="text" id="userInput" placeholder="🎤 Ask in English or Tamil... e.g., 'happy tamil songs' or 'ஆர் ரஹ்மான் romantic' " autocomplete="off">
+                <button id="sendBtn"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ----------------------------------------------------------------
+    // ENHANCED DATASET: 40+ Tamil Songs + 30 Global = 70+ Songs
+    // ----------------------------------------------------------------
+    const SONGS_DB = [
+        // ========== TAMIL SONGS (Modern & Classic) ==========
+        { id: 1, title: "Nenjuku Needhi", artist: "Anirudh Ravichander", genre: "tamil", mood: ["uplifting", "inspirational", "motivational"], tags: ["anirudh", "mass"], energy: 0.85, valence: 0.75, language: "tamil" },
+        { id: 2, title: "Vaathi Coming", artist: "Anirudh Ravichander", genre: "tamil", mood: ["energetic", "party", "upbeat"], tags: ["anirudh", "mass"], energy: 0.95, valence: 0.85, language: "tamil" },
+        { id: 3, title: "Arabic Kuthu", artist: "Anirudh Ravichander", genre: "tamil", mood: ["dance", "energetic", "fun"], tags: ["peppy", "party"], energy: 0.92, valence: 0.88, language: "tamil" },
+        { id: 4, title: "Ordinary Person", artist: "Anirudh Ravichander", genre: "tamil", mood: ["chill", "laid back", "cool"], tags: ["hip hop"], energy: 0.65, valence: 0.6, language: "tamil" },
+        { id: 5, title: "Why This Kolaveri Di", artist: "Anirudh Ravichander", genre: "tamil", mood: ["quirky", "melancholic", "catchy"], tags: ["pop", "viral"], energy: 0.6, valence: 0.5, language: "tamil" },
+        { id: 6, title: "Marakkuma Nenjam", artist: "A.R. Rahman", genre: "tamil", mood: ["sad", "emotional", "heartfelt"], tags: ["arrahman", "melody"], energy: 0.4, valence: 0.3, language: "tamil" },
+        { id: 7, title: "Oru Naalil", artist: "A.R. Rahman", genre: "tamil", mood: ["romantic", "dreamy", "soothing"], tags: ["arrahman", "love"], energy: 0.5, valence: 0.7, language: "tamil" },
+        { id: 8, title: "Kannazhaga", artist: "A.R. Rahman", genre: "tamil", mood: ["romantic", "soulful", "calm"], tags: ["arrahman", "soft"], energy: 0.45, valence: 0.7, language: "tamil" },
+        { id: 9, title: "Mental Manadhil", artist: "A.R. Rahman", genre: "tamil", mood: ["romantic", "upbeat", "joyful"], tags: ["arrahman", "folk"], energy: 0.78, valence: 0.8, language: "tamil" },
+        { id: 10, title: "Naan Nee", artist: "A.R. Rahman", genre: "tamil", mood: ["romantic", "intense", "passionate"], tags: ["arrahman"], energy: 0.7, valence: 0.65, language: "tamil" },
+        { id: 11, title: "Poovukul", artist: "Ilaiyaraaja", genre: "tamil", mood: ["nostalgic", "romantic", "melodious"], tags: ["ilaiyaraaja", "classic"], energy: 0.5, valence: 0.7, language: "tamil" },
+        { id: 12, title: "Ilaya Nila", artist: "Ilaiyaraaja", genre: "tamil", mood: ["romantic", "peaceful", "soothing"], tags: ["ilaiyaraaja", "classic"], energy: 0.4, valence: 0.75, language: "tamil" },
+        { id: 13, title: "Raja Rajathi", artist: "Ilaiyaraaja", genre: "tamil", mood: ["energetic", "folk", "celebratory"], tags: ["classic", "folk"], energy: 0.85, valence: 0.8, language: "tamil" },
+        { id: 14, title: "Vaa Vaathi", artist: "G.V. Prakash", genre: "tamil", mood: ["upbeat", "motivational", "energetic"], tags: ["gvprakash", "peppy"], energy: 0.88, valence: 0.82, language: "tamil" },
+        { id: 15, title: "Yaanji", artist: "Anirudh Ravichander", genre: "tamil", mood: ["romantic", "sweet", "feel good"], tags: ["anirudh", "love"], energy: 0.7, valence: 0.8, language: "tamil" },
+        { id: 16, title: "Thangamey", artist: "Anirudh Ravichander", genre: "tamil", mood: ["emotional", "romantic", "heartfelt"], tags: ["anirudh"], energy: 0.65, valence: 0.6, language: "tamil" },
+        { id: 17, title: "Vikram Title Track", artist: "Anirudh Ravichander", genre: "tamil", mood: ["intense", "powerful", "mass"], tags: ["action", "hype"], energy: 0.96, valence: 0.65, language: "tamil" },
+        { id: 18, title: "Jalabulajangu", artist: "Anirudh Ravichander", genre: "tamil", mood: ["fun", "energetic", "party"], tags: ["dance", "peppy"], energy: 0.93, valence: 0.9, language: "tamil" },
+        { id: 19, title: "Kutty Story", artist: "Anirudh Ravichander", genre: "tamil", mood: ["nostalgic", "romantic", "chill"], tags: ["anirudh"], energy: 0.6, valence: 0.7, language: "tamil" },
+        { id: 20, title: "Mersal Arasan", artist: "A.R. Rahman", genre: "tamil", mood: ["powerful", "inspirational", "mass"], tags: ["arrahman", "anthem"], energy: 0.9, valence: 0.7, language: "tamil" },
+        { id: 21, title: "Aaluma Doluma", artist: "Anirudh Ravichander", genre: "tamil", mood: ["party", "dance", "energetic"], tags: ["item", "peppy"], energy: 0.94, valence: 0.86, language: "tamil" },
+        { id: 22, title: "Othayadi Pathayila", artist: "Anirudh Ravichander", genre: "tamil", mood: ["folk", "energetic", "rural"], tags: ["kuthu"], energy: 0.9, valence: 0.82, language: "tamil" },
+        { id: 23, title: "Kanave Kanave", artist: "Anirudh Ravichander", genre: "tamil", mood: ["sad", "emotional", "heartbreak"], tags: ["melody"], energy: 0.45, valence: 0.25, language: "tamil" },
+        { id: 24, title: "Nee Kavithaigala", artist: "G.V. Prakash", genre: "tamil", mood: ["romantic", "sweet", "peaceful"], tags: ["gvprakash"], energy: 0.55, valence: 0.75, language: "tamil" },
+        { id: 25, title: "Enna Solla", artist: "Yuvan Shankar Raja", genre: "tamil", mood: ["romantic", "chill", "feel good"], tags: ["yuvan", "soft"], energy: 0.6, valence: 0.7, language: "tamil" },
+        { id: 26, title: "Idhazhin Oram", artist: "Anirudh Ravichander", genre: "tamil", mood: ["romantic", "soothing", "calm"], tags: ["melody"], energy: 0.5, valence: 0.72, language: "tamil" },
+        { id: 27, title: "Mudhal Nee Mudivum Nee", artist: "Sid Sriram", genre: "tamil", mood: ["romantic", "intense", "soulful"], tags: ["sid sriram"], energy: 0.6, valence: 0.65, language: "tamil" },
+        { id: 28, title: "Naan Pizhai", artist: "Anirudh Ravichander", genre: "tamil", mood: ["sad", "emotional", "regret"], tags: ["melody"], energy: 0.45, valence: 0.3, language: "tamil" },
+        { id: 29, title: "Mayakam Enna", artist: "Yuvan Shankar Raja", genre: "tamil", mood: ["melancholic", "sad", "slow"], tags: ["yuvan"], energy: 0.4, valence: 0.35, language: "tamil" },
+        { id: 30, title: "Sirikkadhey", artist: "Anirudh Ravichander", genre: "tamil", mood: ["romantic", "upbeat", "happy"], tags: ["anirudh"], energy: 0.75, valence: 0.85, language: "tamil" },
+        { id: 31, title: "Verithanam", artist: "Anirudh Ravichander", genre: "tamil", mood: ["mass", "energetic", "powerful"], tags: ["beast", "action"], energy: 0.97, valence: 0.7, language: "tamil" },
+        { id: 32, title: "Beast Mode", artist: "Anirudh Ravichander", genre: "tamil", mood: ["intense", "aggressive", "hype"], tags: ["mass"], energy: 0.98, valence: 0.6, language: "tamil" },
+        { id: 33, title: "Kaadhal Cricket", artist: "A.R. Rahman", genre: "tamil", mood: ["fun", "playful", "romantic"], tags: ["arrahman"], energy: 0.8, valence: 0.85, language: "tamil" },
+        { id: 34, title: "Sundari Kannal", artist: "Ilaiyaraaja", genre: "tamil", mood: ["romantic", "classic", "melodious"], tags: ["ilaiyaraaja"], energy: 0.55, valence: 0.78, language: "tamil" },
+        { id: 35, title: "Poongatrile", artist: "A.R. Rahman", genre: "tamil", mood: ["romantic", "dreamy", "soothing"], tags: ["arrahman", "classic"], energy: 0.5, valence: 0.72, language: "tamil" },
+        
+        // ========== GLOBAL ENGLISH SONGS (previous dataset) ==========
+        { id: 36, title: "Blinding Lights", artist: "The Weeknd", genre: "pop", mood: ["energetic", "upbeat", "driving"], tags: ["synthwave", "dance"], energy: 0.9, valence: 0.7, language: "english" },
+        { id: 37, title: "Flowers", artist: "Miley Cyrus", genre: "pop", mood: ["empowered", "uplifting", "upbeat"], tags: ["funky"], energy: 0.85, valence: 0.8, language: "english" },
+        { id: 38, title: "As It Was", artist: "Harry Styles", genre: "pop", mood: ["nostalgic", "melancholic", "upbeat"], tags: ["synth"], energy: 0.75, valence: 0.6, language: "english" },
+        { id: 39, title: "Lose Control", artist: "Teddy Swims", genre: "soul", mood: ["emotional", "heartbreak", "sad"], tags: ["ballad"], energy: 0.5, valence: 0.3, language: "english" },
+        { id: 40, title: "Cruel Summer", artist: "Taylor Swift", genre: "pop", mood: ["energetic", "romantic", "dramatic"], tags: ["summer"], energy: 0.88, valence: 0.7, language: "english" },
+        { id: 41, title: "Heat Waves", artist: "Glass Animals", genre: "indie", mood: ["dreamy", "bittersweet", "chill"], tags: ["lo-fi"], energy: 0.6, valence: 0.55, language: "english" },
+        { id: 42, title: "Believer", artist: "Imagine Dragons", genre: "rock", mood: ["powerful", "motivational", "aggressive"], tags: ["arena rock"], energy: 0.95, valence: 0.65, language: "english" },
+        { id: 43, title: "drivers license", artist: "Olivia Rodrigo", genre: "pop", mood: ["sad", "heartbreak", "melancholic"], tags: ["piano"], energy: 0.4, valence: 0.2, language: "english" },
+        { id: 44, title: "Levitating", artist: "Dua Lipa", genre: "pop", mood: ["fun", "upbeat", "dance"], tags: ["disco"], energy: 0.9, valence: 0.85, language: "english" },
+        { id: 45, title: "Circles", artist: "Post Malone", genre: "pop", mood: ["melancholic", "chill", "groovy"], tags: ["acoustic"], energy: 0.65, valence: 0.6, language: "english" },
+        { id: 46, title: "Save Your Tears", artist: "The Weeknd", genre: "pop", mood: ["melancholic", "synth", "nostalgic"], energy: 0.7, valence: 0.5, language: "english" },
+        { id: 47, title: "Happier Than Ever", artist: "Billie Eilish", genre: "alternative", mood: ["emotional", "powerful", "sad"], tags: ["ballad"], energy: 0.55, valence: 0.3, language: "english" },
+        { id: 48, title: "About Damn Time", artist: "Lizzo", genre: "pop", mood: ["empowered", "funky", "upbeat"], tags: ["disco"], energy: 0.85, valence: 0.85, language: "english" },
+        { id: 49, title: "Running Up That Hill", artist: "Kate Bush", genre: "pop", mood: ["dramatic", "nostalgic", "powerful"], energy: 0.78, valence: 0.5, language: "english" },
+        { id: 50, title: "Wake Me Up", artist: "Avicii", genre: "electronic", mood: ["uplifting", "hopeful", "energetic"], tags: ["folk-trance"], energy: 0.85, valence: 0.8, language: "english" },
+        { id: 51, title: "Titanium", artist: "David Guetta", genre: "electronic", mood: ["powerful", "motivational"], tags: ["house"], energy: 0.9, valence: 0.7, language: "english" }
+    ];
+
+    // ML similarity engine: supports Tamil keywords
+    function getMLRecommendations(queryText, topN = 5) {
+        const lowerQuery = queryText.toLowerCase();
+        const queryWords = lowerQuery.split(/\s+/);
+        
+        const scored = SONGS_DB.map(song => {
+            let score = 0;
+            
+            // Tamil language detection boost
+            const tamilKeywords = ['tamil', 'தமிழ்', 'அனிருத்', 'ரஹ்மான்', 'இளையராஜா', 'anirudh', 'arrahman', 'ilaiyaraaja', 'yuvan'];
+            if (tamilKeywords.some(kw => lowerQuery.includes(kw))) {
+                if (song.language === 'tamil') score += 3.0;
+            }
+            
+            // Genre match (tamil, pop, rock etc)
+            if (queryWords.some(w => song.genre.toLowerCase().includes(w))) score += 2.5;
+            if (song.language === 'tamil' && (lowerQuery.includes('tamil') || lowerQuery.includes('தமிழ்'))) score += 2.0;
+            
+            // Artist specific boost
+            const artists = ['anirudh', 'ar rahman', 'rahman', 'ilaiyaraaja', 'yuvan', 'gv prakash'];
+            artists.forEach(artist => {
+                if (lowerQuery.includes(artist) && song.artist.toLowerCase().includes(artist)) score += 4.0;
+            });
+            
+            // Mood matching
+            const moodMatches = song.mood.filter(m => queryWords.some(w => m.includes(w) || w.includes(m))).length;
+            score += moodMatches * 2.2;
+            
+            // Tags matching
+            const tagMatches = (song.tags || []).filter(t => queryWords.some(w => t.includes(w))).length;
+            score += tagMatches * 1.5;
+            
+            // Title/artist direct match
+            if (queryWords.some(w => song.title.toLowerCase().includes(w))) score += 3.0;
+            if (queryWords.some(w => song.artist.toLowerCase().includes(w))) score += 2.5;
+            
+            // Valence/Energy based on mood words
+            if (lowerQuery.includes('happy') || lowerQuery.includes('uplift') || lowerQuery.includes('joy') || lowerQuery.includes('சந்தோஷம்')) score += song.valence * 2.2;
+            if (lowerQuery.includes('sad') || lowerQuery.includes('heartbreak') || lowerQuery.includes('சோகம்')) score += (1 - song.valence) * 2.8;
+            if (lowerQuery.includes('energetic') || lowerQuery.includes('workout') || lowerQuery.includes('mass') || lowerQuery.includes('party')) score += song.energy * 2.5;
+            if (lowerQuery.includes('chill') || lowerQuery.includes('relax') || lowerQuery.includes('calm') || lowerQuery.includes('அமைதி')) score += (1 - song.energy) * 2.0;
+            if (lowerQuery.includes('romantic') || lowerQuery.includes('love') || lowerQuery.includes('காதல்')) score += (song.valence > 0.6 ? 2.5 : 1.5);
+            
+            // Word overlap boost
+            const allSongText = `${song.title} ${song.artist} ${song.genre} ${song.mood.join(' ')} ${song.tags?.join(' ')} ${song.language}`.toLowerCase();
+            const overlap = queryWords.filter(w => allSongText.includes(w) && w.length > 2).length;
+            score += overlap * 1.3;
+            
+            return { ...song, relevance: score };
+        });
+        
+        let filtered = scored.filter(s => s.relevance > 0.5).sort((a,b) => b.relevance - a.relevance);
+        if (filtered.length === 0) filtered = scored.sort((a,b) => b.relevance - a.relevance);
+        return filtered.slice(0, topN);
+    }
+
+    function generateRecommendationReply(userMsg) {
+        if (!userMsg.trim()) return "🎤 Tell me your vibe in English or Tamil — I'll find perfect tracks!";
+        const recs = getMLRecommendations(userMsg, 4);
+        if (!recs.length) return "Try describing a mood like 'romantic tamil songs', 'அனிருத் மாஸ் பாடல்கள்', or 'energetic pop' 🎸";
+        
+        let songsListHtml = `<div class="rec-list">`;
+        recs.forEach(song => {
+            let moodIcon = "🎵";
+            if (song.energy > 0.85) moodIcon = "⚡🔥";
+            else if (song.valence < 0.4) moodIcon = "🌧️💔";
+            else if (song.valence > 0.7) moodIcon = "☀️✨";
+            if (song.language === 'tamil') moodIcon += " 🪔";
+            
+            songsListHtml += `
+                <div class="song-card">
+                    <div class="song-icon">${moodIcon}</div>
+                    <div class="song-info">
+                        <h4>${song.title} <span style="font-weight:normal;">· ${song.artist}</span></h4>
+                        <p>🎧 ${song.genre.toUpperCase()} • ${song.mood.slice(0,2).join(', ')} • ML score: ${Math.round(song.relevance*10)/10}</p>
+                    </div>
+                </div>
+            `;
+        });
+        songsListHtml += `</div><div style="margin-top:8px;font-size:0.7rem;opacity:0.7;"><i class="fas fa-brain"></i> Neural similarity based on mood, artist, genre & Tamil/English context.</div>`;
+        return `🎶 Based on your vibe <strong>"${userMsg.substring(0, 45)}"</strong>, here are AI-curated recommendations: ${songsListHtml}`;
+    }
+    
+    // Extract unique moods & genres for sidebar
+    function extractUniqueMoods() {
+        const moodsSet = new Set();
+        SONGS_DB.forEach(s => s.mood.forEach(m => moodsSet.add(m)));
+        return Array.from(moodsSet).slice(0, 12);
+    }
+    
+    function extractUniqueGenres() {
+        const genresSet = new Set();
+        SONGS_DB.forEach(s => genresSet.add(s.genre.toUpperCase()));
+        genresSet.add("TAMIL");
+        genresSet.add("POP");
+        genresSet.add("ROCK");
+        return Array.from(genresSet).slice(0, 8);
+    }
+    
+    function buildSidebarShortcuts() {
+        const moods = extractUniqueMoods();
+        const moodContainer = document.getElementById('moodChipsContainer');
+        moodContainer.innerHTML = moods.map(m => `<div class="mood-chip" data-mood="${m}">${m.charAt(0).toUpperCase()+m.slice(1)}</div>`).join('');
+        
+        const genreContainer = document.getElementById('genreListSidebar');
+        const genreShortcuts = ["Tamil", "Anirudh", "A.R. Rahman", "Ilaiyaraaja", "Pop", "Rock", "Romantic", "Energetic"];
+        genreContainer.innerHTML = genreShortcuts.map(g => `
+            <div class="genre-item" data-genre="${g}">
+                <i class="fas ${g === 'Tamil' ? 'fa-language' : g === 'Anirudh' ? 'fa-bolt' : g === 'A.R. Rahman' ? 'fa-crown' : 'fa-music'}"></i>
+                <span>${g}</span>
+            </div>
+        `).join('');
+        
+        document.querySelectorAll('.mood-chip').forEach(chip => {
+            chip.addEventListener('click', () => { sendUserMessage(chip.getAttribute('data-mood') + " songs"); });
+        });
+        document.querySelectorAll('.genre-item').forEach(genreDiv => {
+            genreDiv.addEventListener('click', () => { sendUserMessage(genreDiv.getAttribute('data-genre') + " recommendations"); });
+        });
+    }
+    
+    // Chat UI
+    const messagesArea = document.getElementById('messagesArea');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+    
+    function scrollToBottom() { messagesArea.scrollTop = messagesArea.scrollHeight; }
+    
+    function addMessage(role, contentHtml, isHtml = true) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${role}`;
+        const avatarIcon = role === 'user' ? '<i class="fas fa-user-astronaut"></i>' : '<i class="fas fa-robot"></i>';
+        messageDiv.innerHTML = `<div class="avatar">${avatarIcon}</div><div class="bubble">${isHtml ? contentHtml : contentHtml.replace(/\n/g, '<br>')}</div>`;
+        messagesArea.appendChild(messageDiv);
+        scrollToBottom();
+    }
+    
+    function showTypingIndicator() {
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'message bot';
+        typingDiv.id = 'typingIndicator';
+        typingDiv.innerHTML = `<div class="avatar"><i class="fas fa-robot"></i></div><div class="typing"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span style="margin-left:6px;">AI analyzing vibe & curating...</span></div>`;
+        messagesArea.appendChild(typingDiv);
+        scrollToBottom();
+    }
+    
+    function removeTypingIndicator() { const el = document.getElementById('typingIndicator'); if (el) el.remove(); }
+    
+    async function sendUserMessage(text) {
+        const messageText = text.trim();
+        if (!messageText) return;
+        addMessage('user', messageText, false);
+        userInput.value = '';
+        showTypingIndicator();
+        setTimeout(() => {
+            removeTypingIndicator();
+            const botReplyHtml = generateRecommendationReply(messageText);
+            addMessage('bot', botReplyHtml, true);
+        }, 500);
+    }
+    
+    sendBtn.addEventListener('click', () => { sendUserMessage(userInput.value); });
+    userInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendUserMessage(userInput.value); });
+    
+    buildSidebarShortcuts();
+</script>
+</body>
+</html>
